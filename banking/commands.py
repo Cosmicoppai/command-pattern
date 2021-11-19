@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from banking.account import Account
+from banking.transaction import Transaction
 
 
 @dataclass
@@ -70,3 +71,26 @@ class Transfer:
         self.from_account.withdraw(self.amount)
         self.to_account.deposit(self.amount)
         print(f"Redid Transfer of {self.transaction_details}")
+
+
+@dataclass
+class Batch:
+    commands: list[Transaction] = field(default_factory=list)
+
+    def execute(self):
+        completed_commands: list[Transaction] = []
+        try:
+            for command in self.commands:
+                command.execute()
+                completed_commands.append(command)
+        except ValueError:
+            for command in reversed(completed_commands):
+                command.undo()
+
+    def undo(self) -> None:
+        for command in reversed(self.commands):
+            command.undo()
+
+    def redo(self) -> None:
+        for command in self.commands:
+            command.execute()
